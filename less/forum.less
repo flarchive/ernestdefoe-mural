@@ -1,0 +1,1057 @@
+// Mural. Every colour comes from Flarum's custom properties so themes and
+// dark mode carry through; links are prefixed with html:not(#x-hi) to beat
+// themes that colour every link (Bespoke light uses a 0,3,1 selector).
+// LESS evaluates min()/max()/clamp(): they are escaped.
+
+@mural-radius: 14px;
+
+.MuralPage,
+.MuralGalleryPage,
+.MuralSeasonPage {
+  color: var(--text-color);
+}
+
+// ── header ─────────────────────────────────────────────────────
+
+.MuralPage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 4px 0 16px;
+}
+.MuralPage-titles {
+  min-width: 0;
+}
+.MuralPage-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--heading-color, var(--text-color));
+  line-height: 1.25;
+
+  .icon {
+    color: var(--primary-color);
+    margin-right: 4px;
+  }
+}
+.MuralPage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 6px;
+  color: var(--muted-color);
+  font-size: 13px;
+}
+.MuralPage-season {
+  color: var(--text-color);
+  font-weight: 600;
+}
+.MuralPage-active::before {
+  content: '·';
+  margin-right: 10px;
+}
+.MuralPage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.MuralPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.MuralPill--live {
+  background: rgba(225, 29, 72, 0.13);
+  color: #e11d48;
+}
+.MuralPill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e11d48;
+  box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.6);
+  animation: mural-pulse 1.8s infinite;
+}
+@keyframes mural-pulse {
+  70% {
+    box-shadow: 0 0 0 7px rgba(225, 29, 72, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .MuralPill-dot {
+    animation: none;
+  }
+}
+
+// ── the stage ──────────────────────────────────────────────────
+
+.MuralStage {
+  position: relative;
+  height: ~"clamp(340px, calc(100vh - 330px), 820px)";
+  border-radius: @mural-radius;
+  overflow: hidden;
+  border: 1px solid var(--control-bg);
+  // A quiet checkerboard: "this is a canvas", in light and dark.
+  background-color: var(--body-bg);
+  background-image: linear-gradient(45deg, var(--control-bg) 25%, transparent 25%), linear-gradient(-45deg, var(--control-bg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--control-bg) 75%), linear-gradient(-45deg, transparent 75%, var(--control-bg) 75%);
+  background-size: 24px 24px;
+  background-position:
+    0 0,
+    0 12px,
+    12px -12px,
+    -12px 0;
+}
+.MuralStage-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 3px var(--primary-color);
+  }
+}
+.MuralStage--area .MuralStage-canvas {
+  cursor: cell;
+}
+.MuralStage-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.MuralStage-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted-color);
+}
+
+.MuralStage-chip,
+.MuralStage-tool,
+.MuralStage-banner,
+.MuralHover {
+  background: var(--body-bg);
+  color: var(--text-color);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 4px 14px rgba(0, 0, 0, 0.12);
+}
+.MuralStage-chip {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.MuralStage-zoom {
+  color: var(--muted-color);
+  margin-left: 6px;
+}
+.MuralStage-tools {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.Button.MuralStage-tool {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  color: var(--text-color);
+  background: var(--body-bg);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--control-bg);
+    color: var(--text-color);
+  }
+}
+.MuralStage-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: ~"calc(100% - 24px)";
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+
+  .icon {
+    color: #d7263d;
+  }
+  .Button--link {
+    color: var(--primary-color);
+    font-weight: 600;
+    padding: 4px 10px;
+  }
+}
+
+.MuralHover {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 222px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  pointer-events: none;
+  font-size: 12px;
+  animation: mural-in 0.12s ease-out;
+}
+@keyframes mural-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+.MuralHover-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+.MuralHover-where {
+  font: 600 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--muted-color);
+}
+.MuralHover-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  color: var(--muted-color);
+  min-width: 0;
+}
+
+.MuralSwatch {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.MuralPerson {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 600;
+
+  .Avatar--small {
+    --size: 20px;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    line-height: 20px;
+  }
+}
+html:not(#x-hi) .MuralPerson,
+html:not(#x-hi) .MuralPerson:hover {
+  color: var(--text-color);
+  text-decoration: none;
+}
+.MuralPerson-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.MuralPerson--gone {
+  color: var(--muted-color);
+  font-style: italic;
+}
+
+// ── the dock ───────────────────────────────────────────────────
+
+.MuralDock {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: @mural-radius;
+  background: var(--control-bg);
+  color: var(--text-color);
+}
+.MuralDock--empty {
+  display: none;
+}
+.MuralDock-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-color);
+
+  > .icon {
+    color: var(--primary-color);
+  }
+  > span {
+    flex: 1 1 200px;
+  }
+}
+.MuralDock-note--warn > .icon {
+  color: #d7263d;
+}
+.MuralDock-tile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 24px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--muted-color);
+}
+.MuralDock-tile--hint .icon {
+  color: var(--primary-color);
+}
+.MuralDock-where {
+  font-weight: 700;
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+}
+.MuralDock-who {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.MuralDock-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.MuralDock-go {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  margin-left: auto;
+}
+.Button.MuralDock-place {
+  min-width: 132px;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 700;
+
+  &.is-ready {
+    box-shadow: 0 6px 18px -6px var(--primary-color);
+  }
+}
+
+.MuralPalette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 30px);
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.MuralPalette-swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--swatch);
+  // Two edges, so white reads on a light dock and near-black on a dark one.
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(128, 128, 128, 0.35);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  &.is-active {
+    transform: scale(1.12);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+      0 0 0 2px var(--control-bg),
+      0 0 0 4px var(--text-color);
+  }
+}
+
+.MuralRing {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+
+  svg {
+    width: 44px;
+    height: 44px;
+    transform: rotate(-90deg);
+  }
+  circle {
+    fill: none;
+    stroke-width: 3.5;
+  }
+}
+.MuralRing-track {
+  stroke: var(--body-bg);
+}
+.MuralRing-fill {
+  stroke: var(--primary-color);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear;
+}
+.MuralRing.is-ready .MuralRing-fill {
+  stroke: #2e9e44;
+}
+.MuralRing-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-color);
+}
+.MuralRing.is-ready .MuralRing-text {
+  color: #2e9e44;
+  font-size: 14px;
+}
+
+// ── stats ──────────────────────────────────────────────────────
+
+.MuralInfo {
+  margin-top: 20px;
+}
+.MuralStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.MuralStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--control-bg);
+  min-width: 0;
+
+  strong {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  span {
+    font-size: 12px;
+    color: var(--muted-color);
+  }
+}
+.MuralStat--mine strong {
+  color: var(--primary-color);
+}
+.MuralPanels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(~"min(240px, 100%)", 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.MuralPanel {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--control-bg);
+  min-width: 0;
+}
+.MuralPanel-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+.MuralEmpty {
+  color: var(--muted-color);
+  font-size: 13px;
+  margin: 0;
+}
+
+.MuralLeaders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.MuralLeaders-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 0;
+  z-index: 0;
+
+  // The bar: this painter's tiles against the leader's.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--share);
+    border-radius: 8px;
+    background: var(--control-bg);
+    z-index: -1;
+  }
+}
+.MuralLeaders-place {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted-color);
+}
+.MuralLeaders-place--1 {
+  background: #f7c948;
+  color: #5c4400;
+}
+.MuralLeaders-place--2 {
+  background: #cfd5dc;
+  color: #333a42;
+}
+.MuralLeaders-place--3 {
+  background: #e3a76f;
+  color: #4d2c0c;
+}
+.MuralLeaders-count {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-color);
+}
+
+.MuralHours-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 96px;
+}
+.MuralHours-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 3px 3px 1px 1px;
+  background: var(--primary-color);
+  opacity: 0.8;
+
+  &:last-child {
+    opacity: 1;
+  }
+}
+.MuralHours-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted-color);
+}
+
+.MuralHow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-color);
+
+  li {
+    display: flex;
+    gap: 10px;
+  }
+  .icon {
+    flex: none;
+    width: 16px;
+    margin-top: 2px;
+    text-align: center;
+    color: var(--primary-color);
+  }
+}
+
+// ── gallery ────────────────────────────────────────────────────
+
+.MuralGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(~"min(230px, 100%)", 1fr));
+  gap: 16px;
+}
+.MuralCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: @mural-radius;
+  border: 1px solid var(--control-bg);
+  overflow: hidden;
+  min-width: 0;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.35);
+  }
+}
+html:not(#x-hi) .MuralCard,
+html:not(#x-hi) .MuralCard:hover {
+  color: var(--text-color);
+  text-decoration: none;
+}
+.MuralCard-frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  background: var(--control-bg);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+}
+.MuralCard-pill {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+}
+.MuralCard-play {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .MuralCard:hover &,
+  .MuralCard:focus-visible & {
+    opacity: 1;
+  }
+}
+.MuralCard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 14px;
+  min-width: 0;
+}
+.MuralCard-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.MuralCard-meta {
+  font-size: 12px;
+  color: var(--muted-color);
+}
+.MuralCard-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.MuralCard--now {
+  border-color: var(--primary-color);
+}
+.MuralGallery-empty,
+.MuralGallery-more {
+  grid-column: ~"1 / -1";
+  text-align: center;
+  padding: 12px 0;
+}
+
+// ── timelapse player ──────────────────────────────────────────
+
+.MuralPlayer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: @mural-radius;
+  background: var(--control-bg);
+  color: var(--text-color);
+}
+.Button.MuralPlayer-play {
+  border-radius: 10px;
+  min-width: 150px;
+}
+.MuralPlayer-scrub {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--primary-color) var(--pct), var(--body-bg) var(--pct));
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--body-bg);
+    border: 3px solid var(--primary-color);
+  }
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--body-bg);
+    border: 3px solid var(--primary-color);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+.MuralPlayer-count {
+  font: 600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--muted-color);
+  font-variant-numeric: tabular-nums;
+  min-width: 90px;
+}
+.MuralPlayer-speeds {
+  display: inline-flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--body-bg);
+}
+.MuralPlayer-speed {
+  border: 0;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &.is-active {
+    background: var(--body-bg);
+    color: var(--primary-color);
+  }
+}
+
+// ── modals ─────────────────────────────────────────────────────
+
+.MuralModal {
+  .MuralFieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 12px;
+
+    legend {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-color);
+    }
+  }
+  .MuralFields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .MuralFields--four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 0;
+  }
+  .MuralField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    font-weight: normal;
+
+    > span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-color);
+    }
+  }
+  .MuralModal-preview {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--control-bg);
+    color: var(--text-color);
+    font-weight: 600;
+  }
+  .MuralModal-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .MuralModal-history {
+    margin-top: 18px;
+    border-top: 1px solid var(--control-bg);
+    padding-top: 12px;
+
+    h4 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted-color);
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--control-bg);
+      font-size: 13px;
+      color: var(--text-color);
+
+      &.is-undone {
+        opacity: 0.55;
+      }
+    }
+  }
+  .MuralModal-historyText {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 6px;
+    min-width: 0;
+  }
+  .MuralModal-historyMeta {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted-color);
+    font-size: 12px;
+  }
+  .MuralModal-undone {
+    color: var(--muted-color);
+    font-size: 12px;
+  }
+}
+
+// ── the sidebar picture ───────────────────────────────────────
+
+.MuralWidget {
+  margin-top: 16px;
+}
+html:not(#x-hi) .MuralWidget-link,
+html:not(#x-hi) .MuralWidget-link:hover {
+  display: block;
+  color: var(--text-color);
+  text-decoration: none;
+}
+.MuralWidget-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+.MuralWidget-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e11d48;
+}
+.MuralWidget-frame {
+  display: block;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--control-bg);
+  border: 1px solid var(--control-bg);
+  transition: transform 0.15s ease;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+  .MuralWidget-link:hover & {
+    transform: translateY(-2px);
+  }
+}
+.MuralWidget-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color);
+
+  html:not(#x-hi) & {
+    color: var(--primary-color);
+  }
+}
+.MuralWidget--compact {
+  max-width: 190px;
+}
+
+// ── phones ────────────────────────────────────────────────────
+
+@media (max-width: 767px) {
+  .MuralPage-head {
+    margin-top: 12px;
+  }
+  .MuralPage-title {
+    font-size: 19px;
+  }
+  .MuralStage {
+    height: ~"max(280px, calc(100svh - 190px - var(--mural-dock-height, 150px) - var(--mural-dock-bottom, 0px)))";
+    border-radius: 12px;
+  }
+  .MuralStage-tools {
+    right: 8px;
+    top: 8px;
+  }
+  .MuralStage-chip {
+    left: 8px;
+    top: 8px;
+  }
+  // While the canvas is on screen the dock is fixed to the bottom, so painting
+  // never needs a scroll; otherwise it waits in its slot under the canvas.
+  // Fixed, not sticky: themes with overflow-x: hidden on <body> turn sticky off.
+  .MuralDock-slot {
+    min-height: var(--mural-dock-height, 0px);
+    margin: 10px -16px 0;
+  }
+  .MuralDock-slot.is-pinned .MuralDock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--mural-dock-bottom, 0px);
+    // Over other extensions' floating buttons (they sit at 900-1002) on Mural's
+    // own page, under a bottom tab bar (1025), the drawer and modals (1050+).
+    z-index: 1010;
+  }
+  .MuralDock {
+    margin: 0;
+    padding: 10px 16px ~"calc(10px + env(safe-area-inset-bottom))";
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 18px -10px rgba(0, 0, 0, 0.35);
+  }
+  .MuralDock-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .MuralPalette {
+    display: flex;
+    overflow-x: auto;
+    gap: 7px;
+    // Room for the chosen swatch's ring, which the scroller would clip.
+    padding: 7px 5px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+  .MuralPalette-swatch {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    scroll-snap-align: start;
+  }
+  .MuralDock-go {
+    margin-left: 0;
+  }
+  .Button.MuralDock-place {
+    flex: 1 1 auto;
+  }
+  .MuralStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .MuralModal .MuralFields--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  // The stock sidebar folds into a menu on phones: no room for a picture.
+  .IndexPage .MuralWidget--compact {
+    display: none;
+  }
+}
